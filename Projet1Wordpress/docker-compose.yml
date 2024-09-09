@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  wordpress:
+    image: wordpress:latest
+    container_name: wordpress_container
+    ports:
+      - "8080:80"  # Le port 80 du container sera mappé au port 8080 de l'hôte
+    environment:
+      WORDPRESS_DB_HOST: mysql:3306
+      WORDPRESS_DB_USER: wordpress_user
+      WORDPRESS_DB_PASSWORD: wordpress_password
+      WORDPRESS_DB_NAME: wordpress_db
+    volumes:
+      - wordpress-data:/var/www/html
+    depends_on:
+      - mysql
+    networks:
+      - wp-network
+
+  mysql:
+    image: mysql:5.7
+    container_name: mysql_container2
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password
+      MYSQL_DATABASE: wordpress_db
+      MYSQL_USER: wordpress_user
+      MYSQL_PASSWORD: wordpress_password
+    volumes:
+      - mysql-data:/var/lib/mysql
+    networks:
+      - wp-network
+
+  security-client:
+    build:
+      context: ./client  # Le répertoire où se trouve votre Dockerfile pour Nmap et Nikto
+    container_name: security_client
+    networks:
+      - wp-network
+    entrypoint: /bin/bash  # Lance un shell bash pour exécuter manuellement Nmap et Nikto
+    depends_on:
+      - wordpress
+      - mysql
+
+volumes:
+  wordpress-data:
+  mysql-data:
+
+networks:
+  wp-network:

@@ -1,0 +1,39 @@
+version: '3.8'
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:latest
+    ports:
+      - 8000:80
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+volumes:
+  db_data:
+security-client:
+  build:
+    context: ./client # Le répertoire où se trouve votre Dockerfile pour Nmap et Nikto
+  container_name: security_client
+  networks:
+    - wp-network
+  entrypoint: /bin/bash # Lance un shell bash pour exécuter manuellement Nmap et Nikto
+  depends_on:
+    - wordpress
+    - mysql:5.7
