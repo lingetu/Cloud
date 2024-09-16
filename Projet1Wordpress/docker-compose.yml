@@ -1,12 +1,31 @@
 version: '3.8'
 
 services:
+
+  modsecurity:
+      image: owasp/modsecurity-crs:3.3-apache-alpine-202310170110
+      
+      container_name: modsecurity_container
+      environment:
+        BACKEND: "http://wordpress_container:80"
+        APACHE_ALWAYS_TLS_REDIRECT: "Off"
+        REQ_HEADER_FORWARDED_PROTO: "http"
+      volumes:
+        - ./modsecurity.conf:/etc/modsecurity/modsecurity.conf  # Vous pouvez configurer ModSecurity si nécessaire
+      depends_on:
+        - wordpress
+      networks:
+        - wp-network
+      ports:
+        - "80:80"
+
   wordpress:
     image: wordpress:latest
     container_name: wordpress_container
-    ports:
-      - "8080:80"  # Le port 80 du container sera mappé au port 8080 de l'hôte
+    # ports:
+    #   - "8080:80" # Le port 80 du container sera mappé au port 8080 de l'hôte
     environment:
+
       WORDPRESS_DB_HOST: mysql:3306
       WORDPRESS_DB_USER: wordpress_user
       WORDPRESS_DB_PASSWORD: wordpress_password
@@ -31,20 +50,20 @@ services:
     networks:
       - wp-network
 
-  security-client:
+  securityclient:
     build:
-      context: ./client  # Le répertoire où se trouve votre Dockerfile pour Nmap et Nikto
-    container_name: security_client
+      context: ./client # Le répertoire où se trouve votre Dockerfile pour Nmap et Nikto
+    container_name: securityclient
     networks:
       - wp-network
-    entrypoint: /bin/bash  # Lance un shell bash pour exécuter manuellement Nmap et Nikto
+    entrypoint: /bin/bash # Lance un shell bash pour exécuter manuellement Nmap et Nikto
     depends_on:
       - wordpress
       - mysql
-
 volumes:
   wordpress-data:
   mysql-data:
+
 
 networks:
   wp-network:
